@@ -103,6 +103,28 @@
   .list-item:last-child { border-bottom: none; }
   .slider-val { text-align: center; font-size: 22px; font-weight: 700; color: var(--accent); margin: 4px 0; }
   .empty { text-align: center; color: var(--muted); padding: 20px 0; font-size: 13px; }
+
+  .md-content h1, .md-content h2 { color: var(--accent); font-size: 16px; margin: 14px 0 8px; }
+  .md-content h1:first-child, .md-content h2:first-child { margin-top: 0; }
+  .md-content h3 { color: var(--accent); font-size: 15px; margin: 14px 0 8px; }
+  .md-content h3:first-child { margin-top: 0; }
+  .md-content h4 {
+    color: var(--text); font-size: 14px; margin: 16px 0 8px; padding-top: 12px;
+    border-top: 1px solid #262a33;
+  }
+  .md-content h4:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+  .md-content h5, .md-content h6 { color: var(--muted); font-size: 12px; margin: 10px 0 4px; }
+  .md-content ul { margin: 4px 0 10px; padding-left: 18px; }
+  .md-content li { margin-bottom: 4px; font-size: 13px; line-height: 1.5; }
+  .md-content p { margin: 6px 0; font-size: 13px; line-height: 1.5; }
+  .md-content hr { border: none; border-top: 1px solid #262a33; margin: 12px 0; }
+  .md-content strong { color: var(--accent); font-weight: 600; }
+  .exercise-links { display: flex; gap: 8px; margin: 2px 0 8px; flex-wrap: wrap; }
+  .exercise-links a {
+    font-size: 11px; color: var(--accent); background: rgba(74,222,128,0.1);
+    padding: 4px 9px; border-radius: 999px; text-decoration: none;
+  }
+  .msg.assistant .md-content h3, .msg.assistant .md-content h4 { margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -159,7 +181,7 @@
 
     <div class="card" id="planCard" style="display:none">
       <h2>Bugungi reja</h2>
-      <div id="planText" class="muted" style="white-space:pre-wrap; color:var(--text)"></div>
+      <div id="planText" class="md-content"></div>
       <button class="btn-secondary" style="margin-top:12px" id="newBriefBtn">Qayta brief qilish</button>
     </div>
 
@@ -442,6 +464,61 @@ const Store = {
   setChat(history) { lsSet('forma_chat', history); },
 };
 
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function inlineFormat(str) {
+  return str.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+function exerciseLinksHtml(name) {
+  const q = encodeURIComponent(name + ' exercise texnika to\'g\'ri bajarish');
+  const ytUrl = 'https://www.youtube.com/results?search_query=' + q;
+  const imgUrl = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(name + ' exercise form');
+  return `<div class="exercise-links"><a href="${ytUrl}" target="_blank" rel="noopener">🎥 YouTube'da ko'rish</a><a href="${imgUrl}" target="_blank" rel="noopener">🖼 Rasmlarni ko'rish</a></div>`;
+}
+
+function renderMarkdown(text) {
+  const lines = escapeHtml(text || '').split('\n');
+  let html = '';
+  let inList = false;
+  const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { closeList(); continue; }
+
+    if (/^-{3,}$/.test(line)) { closeList(); html += '<hr/>'; continue; }
+
+    const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headerMatch) {
+      closeList();
+      const level = headerMatch[1].length;
+      const content = inlineFormat(headerMatch[2]);
+      const tag = 'h' + Math.min(level, 6);
+      html += `<${tag}>${content}</${tag}>`;
+      const exerciseMatch = headerMatch[2].match(/^\d+\.\s*\*{0,2}(.+?)\*{0,2}$/);
+      if (level >= 4 && exerciseMatch) {
+        html += exerciseLinksHtml(exerciseMatch[1].trim());
+      }
+      continue;
+    }
+
+    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+    if (bulletMatch) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += `<li>${inlineFormat(bulletMatch[1])}</li>`;
+      continue;
+    }
+
+    closeList();
+    html += `<p>${inlineFormat(line)}</p>`;
+  }
+  closeList();
+  return html;
+}
+
 function switchScreen(name) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
@@ -533,8 +610,13 @@ function renderChat(chat) {
   log.innerHTML = '';
   chat.forEach((m) => {
     const div = document.createElement('div');
-    div.className = 'msg ' + (m.role === 'user' ? 'user' : 'assistant');
-    div.textContent = m.content;
+    if (m.role === 'user') {
+      div.className = 'msg user';
+      div.textContent = m.content;
+    } else {
+      div.className = 'msg assistant md-content';
+      div.innerHTML = renderMarkdown(m.content);
+    }
     log.appendChild(div);
   });
   log.scrollTop = log.scrollHeight;
@@ -574,7 +656,7 @@ document.getElementById('getWorkoutBtn').addEventListener('click', async () => {
     const reply = await sendCoachMessage(briefText, { silent: true });
     const plan = { brief, text: reply };
     await Store.setTodayPlan(plan);
-    document.getElementById('planText').textContent = reply;
+    document.getElementById('planText').innerHTML = renderMarkdown(reply);
     document.getElementById('planCard').style.display = 'block';
     document.getElementById('briefCard').style.display = 'none';
   } catch (err) {
@@ -673,7 +755,7 @@ async function init() {
 
   const plan = await Store.getTodayPlan();
   if (plan && plan.text) {
-    document.getElementById('planText').textContent = plan.text;
+    document.getElementById('planText').innerHTML = renderMarkdown(plan.text);
     document.getElementById('planCard').style.display = 'block';
     document.getElementById('briefCard').style.display = 'none';
   }
