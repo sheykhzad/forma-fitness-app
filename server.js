@@ -201,12 +201,18 @@ app.post('/api/progress', (req, res) => {
   res.json({ ok: true, entry });
 });
 
+const LANGUAGE_DIRECTIVE = {
+  uz: "Javobni FAQAT o'zbek tilida bering. Hech qanday inglizcha yoki boshqa chet tilidagi so'z, qisqartma yoki jargon ishlatmang. Mashq nomlarini inglizcha-lotincha nomi bilan emas, balki o'zbekcha tarjima yoki tavsif bilan yozing (masalan 'Pull-Ups' emas — 'Turnikda tortilish', 'Bench Press' emas — 'Yotib ko'krakni itarish', 'Squat' emas — 'Cho'kkalab turish'). 'Set' o'rniga 'to'plam', 'rep' o'rniga 'takror' so'zlarini ishlating. 'RPE'/'RIR' kabi qisqartmalar o'rniga tushunarli o'zbekcha tavsif bering (masalan 'kuch sarfi darajasi 10 balldan 7 ball'). 'DOMS' o'rniga 'mashqdan keyingi mushak og'rig'i' deng.",
+  ru: "Отвечай ТОЛЬКО на русском языке. Не используй иностранные слова, сокращения или жаргон. Названия упражнений переводи или описывай по-русски, а не оставляй на английском (например, не 'Pull-Ups', а 'Подтягивания на турнике'; не 'Bench Press', а 'Жим штанги лёжа'; не 'Squat', а 'Приседания'). Вместо 'RPE'/'RIR' используй понятное описание уровня нагрузки по-русски (например 'уровень нагрузки 7 из 10'). Вместо 'DOMS' говори 'мышечная боль после тренировки'.",
+};
+
 app.post('/api/coach/chat', async (req, res) => {
   try {
-    const { message, profile, history } = req.body;
+    const { message, profile, history, lang } = req.body;
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Xabar matni kerak' });
     }
+    const languageDirective = LANGUAGE_DIRECTIVE[lang] || LANGUAGE_DIRECTIVE.uz;
 
     const key = resolveUserKey(req);
     const db = key ? readDB() : null;
@@ -229,6 +235,7 @@ app.post('/api/coach/chat', async (req, res) => {
         messages.push({ role: turn.role, content: turn.content });
       }
     }
+    messages.push({ role: 'system', content: languageDirective });
     messages.push({ role: 'user', content: message });
 
     const reply = await callOpenAI(messages);

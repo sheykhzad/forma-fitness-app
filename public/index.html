@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-<title>Forma — AI fitness coach</title>
+<title>Forma</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
@@ -29,10 +29,17 @@
   .app { max-width: 480px; margin: 0 auto; padding: 16px; }
   header.top {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 4px 0 16px;
+    padding: 4px 0 16px; gap: 10px;
   }
   header.top h1 { font-size: 20px; margin: 0; }
   header.top .sub { color: var(--muted); font-size: 12px; }
+  .top-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .lang-switch { display: flex; background: var(--card-2); border-radius: 999px; padding: 2px; }
+  .lang-switch button {
+    width: auto; padding: 5px 10px; font-size: 11px; border-radius: 999px;
+    background: transparent; color: var(--muted);
+  }
+  .lang-switch button.active { background: var(--accent); color: #06250f; }
   .card {
     background: var(--card);
     border-radius: var(--radius);
@@ -64,7 +71,7 @@
   .muted { color: var(--muted); font-size: 13px; }
   .pill {
     display: inline-block; background: var(--card-2); color: var(--muted);
-    border-radius: 999px; padding: 4px 10px; font-size: 11px; margin-right: 6px;
+    border-radius: 999px; padding: 4px 10px; font-size: 11px;
   }
   .screen { display: none; }
   .screen.active { display: block; }
@@ -101,7 +108,6 @@
   .chat-input-row button { width: auto; padding: 10px 14px; }
   .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #262a33; font-size: 13px; }
   .list-item:last-child { border-bottom: none; }
-  .slider-val { text-align: center; font-size: 22px; font-weight: 700; color: var(--accent); margin: 4px 0; }
   .empty { text-align: center; color: var(--muted); padding: 20px 0; font-size: 13px; }
 
   .md-content h1, .md-content h2 { color: var(--accent); font-size: 16px; margin: 14px 0 8px; }
@@ -170,186 +176,195 @@
   <header class="top">
     <div>
       <h1>💪 Forma</h1>
-      <div class="sub">Shaxsiy AI fitness murabbiyingiz</div>
+      <div class="sub" data-i18n="tagline"></div>
     </div>
-    <div class="pill" id="modeBadge">—</div>
+    <div class="top-right">
+      <div class="lang-switch">
+        <button type="button" id="langUz">UZ</button>
+        <button type="button" id="langRu">RU</button>
+      </div>
+      <div class="pill" id="modeBadge">—</div>
+    </div>
   </header>
 
   <!-- BUGUN -->
   <section class="screen active" id="screen-today">
     <div class="card" id="briefCard">
-      <h2>Bugungi brief</h2>
-      <p class="muted">Workoutni berishdan oldin bugungi holatingizni bilishim kerak.</p>
+      <h2 data-i18n="briefTitle"></h2>
+      <p class="muted" data-i18n="briefIntro"></p>
 
-      <label>Maqsad</label>
+      <label data-i18n="labelGoal"></label>
       <select id="briefGoal">
-        <option value="mushak">Mushak olish</option>
-        <option value="kuch">Kuch</option>
-        <option value="ozish">Ozish</option>
-        <option value="recomposition">Recomposition</option>
-        <option value="aralash">Aralash</option>
+        <option value="muscle" data-i18n="goalMuscle"></option>
+        <option value="strength" data-i18n="goalStrength"></option>
+        <option value="fatloss" data-i18n="goalFatloss"></option>
+        <option value="recomp" data-i18n="goalRecomp"></option>
+        <option value="mixed" data-i18n="goalMixed"></option>
       </select>
 
-      <label>Bugun qaysi guruh? (ixtiyoriy, bo'sh qoldirsangiz AI tanlaydi)</label>
-      <input id="briefMuscle" placeholder="masalan: ko'krak, orqa, oyoq..." />
+      <label data-i18n="labelMuscleGroup"></label>
+      <input id="briefMuscle" data-i18n-ph="placeholderMuscleGroup" />
 
-      <label>Energiya: <span id="energyVal">7</span>/10</label>
+      <label><span data-i18n="labelEnergy"></span>: <span id="energyVal">7</span>/10</label>
       <input id="briefEnergy" type="range" min="1" max="10" value="7" />
 
-      <label>Bugun uyqu (soat)</label>
+      <label data-i18n="labelSleep"></label>
       <input id="briefSleep" type="number" min="0" max="14" value="7" />
 
-      <label>Oxirgi mashg'ulot (nima va qachon)</label>
-      <input id="briefLast" placeholder="masalan: 2 kun oldin yelka" />
+      <label data-i18n="labelLastWorkout"></label>
+      <input id="briefLast" data-i18n-ph="placeholderLastWorkout" />
 
-      <label>Bugun qancha vaqtingiz bor?</label>
+      <label data-i18n="labelTime"></label>
       <select id="briefTime">
-        <option value="45 daqiqa">45 daqiqa</option>
-        <option value="60 daqiqa" selected>60 daqiqa</option>
-        <option value="90 daqiqa">90 daqiqa</option>
-        <option value="2 soat">2 soat</option>
+        <option value="45" data-i18n="time45"></option>
+        <option value="60" selected data-i18n="time60"></option>
+        <option value="90" data-i18n="time90"></option>
+        <option value="120" data-i18n="time120"></option>
       </select>
 
-      <label>DOMS / og'riq bormi?</label>
-      <input id="briefPain" placeholder="masalan: yo'q / tizza biroz og'riydi" />
+      <label data-i18n="labelPain"></label>
+      <input id="briefPain" data-i18n-ph="placeholderPain" />
 
-      <button class="btn-primary" style="margin-top:14px" id="getWorkoutBtn">Workoutni olish</button>
+      <button class="btn-primary" style="margin-top:14px" id="getWorkoutBtn" data-i18n="btnGetWorkout"></button>
     </div>
 
     <div class="card" id="planCard" style="display:none">
-      <h2>Bugungi reja</h2>
+      <h2 data-i18n="planTitle"></h2>
       <div id="planText" class="md-content"></div>
-      <button class="btn-secondary" style="margin-top:12px" id="newBriefBtn">Qayta brief qilish</button>
+      <button class="btn-secondary" style="margin-top:12px" id="newBriefBtn" data-i18n="btnNewBrief"></button>
     </div>
 
     <div class="card">
-      <h2>Set qayd etish</h2>
+      <h2 data-i18n="logTitle"></h2>
       <div class="row">
-        <input id="logExercise" placeholder="Mashq" />
+        <input id="logExercise" data-i18n-ph="placeholderExercise" />
       </div>
       <div class="row" style="margin-top:8px">
-        <input id="logSets" type="number" placeholder="Set" min="1" />
-        <input id="logReps" type="number" placeholder="Reps" min="1" />
-        <input id="logWeight" type="number" placeholder="Vazn (kg)" min="0" />
+        <input id="logSets" type="number" data-i18n-ph="placeholderSets" min="1" />
+        <input id="logReps" type="number" data-i18n-ph="placeholderReps" min="1" />
+        <input id="logWeight" type="number" data-i18n-ph="placeholderWeight" min="0" />
       </div>
-      <button class="btn-secondary" style="margin-top:10px" id="addLogBtn">Qo'shish</button>
+      <button class="btn-secondary" style="margin-top:10px" id="addLogBtn" data-i18n="btnAdd"></button>
       <div id="logList" style="margin-top:10px"></div>
     </div>
   </section>
 
-  <!-- COACH -->
+  <!-- MURABBIY -->
   <section class="screen" id="screen-coach">
     <div class="card">
-      <h2>🤖 AI Coach bilan suhbat</h2>
+      <h2>🧑‍🏫 <span data-i18n="coachTitle"></span></h2>
       <div class="chat-log" id="chatLog"></div>
       <div class="chat-input-row">
-        <input id="chatInput" placeholder="Savolingizni yozing..." />
-        <button class="btn-primary" id="chatSendBtn">Yubor</button>
+        <input id="chatInput" data-i18n-ph="placeholderChat" />
+        <button class="btn-primary" id="chatSendBtn" data-i18n="btnSend"></button>
       </div>
     </div>
   </section>
 
-  <!-- PROGRESS -->
+  <!-- NATIJA -->
   <section class="screen" id="screen-progress">
     <div class="card">
-      <h2>📈 Vazn / bel kiritish</h2>
+      <h2>📈 <span data-i18n="progressTitle"></span></h2>
       <div class="row">
-        <input id="progWeight" type="number" step="0.1" placeholder="Vazn (kg)" />
-        <input id="progWaist" type="number" step="0.1" placeholder="Bel (sm)" />
+        <input id="progWeight" type="number" step="0.1" data-i18n-ph="placeholderWeightKg" />
+        <input id="progWaist" type="number" step="0.1" data-i18n-ph="placeholderWaist" />
       </div>
-      <button class="btn-secondary" style="margin-top:10px" id="addProgressBtn">Saqlash</button>
+      <button class="btn-secondary" style="margin-top:10px" id="addProgressBtn" data-i18n="btnSave"></button>
     </div>
     <div class="card">
-      <h2>Tarix</h2>
-      <div id="progressList"><div class="empty">Hali ma'lumot yo'q</div></div>
+      <h2 data-i18n="historyTitle"></h2>
+      <div id="progressList"></div>
     </div>
   </section>
 
   <!-- PROFIL -->
   <section class="screen" id="screen-profile">
     <div class="card">
-      <h2>👤 Profil</h2>
-      <label>Ism</label>
+      <h2>👤 <span data-i18n="profileTitle"></span></h2>
+      <label data-i18n="labelName"></label>
       <input id="pName" />
       <div class="row">
         <div>
-          <label>Jins</label>
-          <select id="pGender"><option value="erkak">Erkak</option><option value="ayol">Ayol</option></select>
+          <label data-i18n="labelGender"></label>
+          <select id="pGender">
+            <option value="male" data-i18n="genderMale"></option>
+            <option value="female" data-i18n="genderFemale"></option>
+          </select>
         </div>
         <div>
-          <label>Yosh</label>
+          <label data-i18n="labelAge"></label>
           <input id="pAge" type="number" min="10" max="100" />
         </div>
       </div>
       <div class="row">
         <div>
-          <label>Bo'y (sm)</label>
+          <label data-i18n="labelHeight"></label>
           <input id="pHeight" type="number" />
         </div>
         <div>
-          <label>Vazn (kg)</label>
+          <label data-i18n="labelWeight"></label>
           <input id="pWeight" type="number" />
         </div>
       </div>
-      <label>Maqsad</label>
+      <label data-i18n="labelGoal"></label>
       <select id="pGoal">
-        <option value="mushak">Mushak olish</option>
-        <option value="kuch">Kuch</option>
-        <option value="ozish">Ozish</option>
-        <option value="recomposition">Recomposition</option>
-        <option value="sog'lom ovqatlanish">Sog'lom ovqatlanish</option>
+        <option value="muscle" data-i18n="goalMuscle"></option>
+        <option value="strength" data-i18n="goalStrength"></option>
+        <option value="fatloss" data-i18n="goalFatloss"></option>
+        <option value="recomp" data-i18n="goalRecomp"></option>
+        <option value="health" data-i18n="goalHealth"></option>
       </select>
-      <label>Haftalik trening kuni</label>
+      <label data-i18n="labelWeeklyFreq"></label>
       <input id="pFreq" type="number" min="1" max="7" />
-      <label>Trening tajribasi</label>
+      <label data-i18n="labelExperience"></label>
       <select id="pExp">
-        <option value="boshlang'ich">Boshlang'ich</option>
-        <option value="o'rta">O'rta</option>
-        <option value="tajribali">Tajribali</option>
+        <option value="beginner" data-i18n="expBeginner"></option>
+        <option value="intermediate" data-i18n="expIntermediate"></option>
+        <option value="advanced" data-i18n="expAdvanced"></option>
       </select>
-      <label>Kundalik harakat</label>
+      <label data-i18n="labelActivity"></label>
       <select id="pActivity">
-        <option value="kam harakat">Kam harakat (ofis)</option>
-        <option value="o'rtacha">O'rtacha</option>
-        <option value="faol">Faol</option>
+        <option value="low" data-i18n="activityLow"></option>
+        <option value="medium" data-i18n="activityMedium"></option>
+        <option value="high" data-i18n="activityHigh"></option>
       </select>
-      <button class="btn-primary" style="margin-top:14px" id="saveProfileBtn">Saqlash</button>
+      <button class="btn-primary" style="margin-top:14px" id="saveProfileBtn" data-i18n="btnSave"></button>
     </div>
   </section>
 
-  <!-- OVQATLANISH -->
+  <!-- OVQAT -->
   <section class="screen" id="screen-more">
     <div class="card">
-      <h2>🍽 Kunlik ovqatlanish maqsadi</h2>
-      <p class="muted" id="nutriBasis">Profilingizga asoslangan taxminiy hisob.</p>
+      <h2>🍽 <span data-i18n="nutriTitle"></span></h2>
+      <p class="muted" data-i18n="nutriBasis"></p>
       <div class="nutri-grid" id="nutriGrid"></div>
 
-      <div class="nutri-toggle" id="nutriAdjustToggle">Qo'lda sozlash ⚙️</div>
+      <div class="nutri-toggle" id="nutriAdjustToggle">⚙️ <span data-i18n="btnAdjust"></span></div>
       <div id="nutriAdjust" style="display:none">
-        <label>Protein (g/kg tana vazni)</label>
+        <label data-i18n="labelProteinPerKg"></label>
         <input id="macroProteinPerKg" type="number" step="0.1" value="1.8" />
-        <label>Kaloriya o'zgartirish (ixtiyoriy, bo'sh = avtomatik)</label>
-        <input id="macroKcalOverride" type="number" placeholder="masalan: 2200" />
-        <button class="btn-secondary" style="margin-top:10px" id="macroCalcBtn">Qayta hisoblash</button>
+        <label data-i18n="labelKcalOverride"></label>
+        <input id="macroKcalOverride" type="number" data-i18n-ph="placeholderKcal" />
+        <button class="btn-secondary" style="margin-top:10px" id="macroCalcBtn" data-i18n="btnRecalc"></button>
       </div>
     </div>
 
     <div class="card">
-      <h2>👨‍🍳 Retsept so'rang</h2>
-      <p class="muted">Uyingizda bor mahsulotlarni yoki qanday taom xohlayotganingizni yozing.</p>
-      <input id="recipeInput" placeholder="masalan: tovuq ko'krak, guruch, sabzavotlar" />
-      <button class="btn-primary" style="margin-top:10px" id="recipeBtn">Retsept olish</button>
+      <h2>👨‍🍳 <span data-i18n="recipeTitle"></span></h2>
+      <p class="muted" data-i18n="recipeIntro"></p>
+      <input id="recipeInput" data-i18n-ph="placeholderRecipe" />
+      <button class="btn-primary" style="margin-top:10px" id="recipeBtn" data-i18n="btnGetRecipe"></button>
       <div id="recipeResult" class="md-content" style="margin-top:10px"></div>
     </div>
 
     <div class="card">
-      <h2>🎤 Voice AI coach</h2>
-      <p class="muted">Ovozli murabbiy funksiyasi tez kunda qo'shiladi. Hozircha matnli chatdan foydalaning.</p>
-      <button class="btn-secondary" disabled>Tez kunda</button>
+      <h2>🎙 <span data-i18n="voiceTitle"></span></h2>
+      <p class="muted" data-i18n="voiceDesc"></p>
+      <button class="btn-secondary" disabled data-i18n="btnSoon"></button>
     </div>
     <div class="card">
-      <h2>🩺 Sog'liq ma'lumotlari</h2>
-      <p class="muted">Tibbiy natija yoki rasm yuklang (demo — tahlil qilinmaydi).</p>
+      <h2>🩺 <span data-i18n="healthTitle"></span></h2>
+      <p class="muted" data-i18n="healthDesc"></p>
       <input type="file" id="healthFile" accept="image/*,.pdf" />
       <div id="healthStatus" class="muted" style="margin-top:8px"></div>
     </div>
@@ -357,11 +372,11 @@
 </div>
 
 <nav class="bottom">
-  <div class="tab active" data-screen="today"><span class="ic">🏠</span>Bugun</div>
-  <div class="tab" data-screen="coach"><span class="ic">💬</span>Coach</div>
-  <div class="tab" data-screen="progress"><span class="ic">📈</span>Progress</div>
-  <div class="tab" data-screen="profile"><span class="ic">👤</span>Profil</div>
-  <div class="tab" data-screen="more"><span class="ic">🍽</span>Ovqat</div>
+  <div class="tab active" data-screen="today"><span class="ic">🏠</span><span data-i18n="navToday"></span></div>
+  <div class="tab" data-screen="coach"><span class="ic">🧑‍🏫</span><span data-i18n="navCoach"></span></div>
+  <div class="tab" data-screen="progress"><span class="ic">📈</span><span data-i18n="navProgress"></span></div>
+  <div class="tab" data-screen="profile"><span class="ic">👤</span><span data-i18n="navProfile"></span></div>
+  <div class="tab" data-screen="more"><span class="ic">🍽</span><span data-i18n="navNutrition"></span></div>
 </nav>
 
 <div class="overlay hidden" id="onboardingOverlay">
@@ -369,83 +384,338 @@
     <div class="step-dots"><span class="on" data-step="0"></span><span data-step="1"></span><span data-step="2"></span></div>
 
     <div id="ob-step-0">
-      <h2 style="margin-top:0">Assalomu alaykum! 👋</h2>
-      <p class="muted">Keling, avval siz bilan tanishib olaylik. Bu ma'lumotlar shaxsiy reja tuzish uchun kerak.</p>
-      <label>Ismingiz</label>
+      <h2 style="margin-top:0" data-i18n="obWelcome"></h2>
+      <p class="muted" data-i18n="obIntro"></p>
+      <label data-i18n="labelYourName"></label>
       <input id="obName" />
       <div class="row">
         <div>
-          <label>Jins</label>
-          <select id="obGender"><option value="erkak">Erkak</option><option value="ayol">Ayol</option></select>
+          <label data-i18n="labelGender"></label>
+          <select id="obGender">
+            <option value="male" data-i18n="genderMale"></option>
+            <option value="female" data-i18n="genderFemale"></option>
+          </select>
         </div>
         <div>
-          <label>Yosh</label>
+          <label data-i18n="labelAge"></label>
           <input id="obAge" type="number" min="10" max="100" />
         </div>
       </div>
       <div class="row">
         <div>
-          <label>Bo'y (sm)</label>
+          <label data-i18n="labelHeight"></label>
           <input id="obHeight" type="number" />
         </div>
         <div>
-          <label>Vazn (kg)</label>
+          <label data-i18n="labelWeight"></label>
           <input id="obWeight" type="number" />
         </div>
       </div>
-      <button class="btn-primary" style="margin-top:16px" onclick="obNext(1)">Keyingisi</button>
+      <button class="btn-primary" style="margin-top:16px" onclick="obNext(1)" data-i18n="btnNext"></button>
     </div>
 
     <div id="ob-step-1" style="display:none">
-      <h2 style="margin-top:0">Maqsadingiz nima?</h2>
+      <h2 style="margin-top:0" data-i18n="obGoalTitle"></h2>
       <select id="obGoal">
-        <option value="mushak">Mushak olish</option>
-        <option value="kuch">Kuch</option>
-        <option value="ozish">Ozish</option>
-        <option value="recomposition">Recomposition</option>
-        <option value="sog'lom ovqatlanish">Sog'lom ovqatlanish</option>
+        <option value="muscle" data-i18n="goalMuscle"></option>
+        <option value="strength" data-i18n="goalStrength"></option>
+        <option value="fatloss" data-i18n="goalFatloss"></option>
+        <option value="recomp" data-i18n="goalRecomp"></option>
+        <option value="health" data-i18n="goalHealth"></option>
       </select>
-      <label>Kundalik harakat darajangiz</label>
+      <label data-i18n="labelActivityLevel"></label>
       <select id="obActivity">
-        <option value="kam harakat">Kam harakat (ofis)</option>
-        <option value="o'rtacha">O'rtacha</option>
-        <option value="faol">Faol</option>
+        <option value="low" data-i18n="activityLow"></option>
+        <option value="medium" data-i18n="activityMedium"></option>
+        <option value="high" data-i18n="activityHigh"></option>
       </select>
       <div class="row" style="margin-top:16px">
-        <button class="btn-secondary" onclick="obNext(0)">Orqaga</button>
-        <button class="btn-primary" onclick="obNext(2)">Keyingisi</button>
+        <button class="btn-secondary" onclick="obNext(0)" data-i18n="btnBack"></button>
+        <button class="btn-primary" onclick="obNext(2)" data-i18n="btnNext"></button>
       </div>
     </div>
 
     <div id="ob-step-2" style="display:none">
-      <h2 style="margin-top:0">Trening haqida</h2>
-      <label>Tajribangiz</label>
+      <h2 style="margin-top:0" data-i18n="obTrainingTitle"></h2>
+      <label data-i18n="labelYourExperience"></label>
       <select id="obExp">
-        <option value="boshlang'ich">Boshlang'ich</option>
-        <option value="o'rta">O'rta</option>
-        <option value="tajribali">Tajribali</option>
+        <option value="beginner" data-i18n="expBeginner"></option>
+        <option value="intermediate" data-i18n="expIntermediate"></option>
+        <option value="advanced" data-i18n="expAdvanced"></option>
       </select>
-      <label>Haftada necha kun trening qilishni xohlaysiz?</label>
+      <label data-i18n="labelWeeklyDays"></label>
       <input id="obFreq" type="number" min="1" max="7" value="3" />
       <div class="row" style="margin-top:16px">
-        <button class="btn-secondary" onclick="obNext(1)">Orqaga</button>
-        <button class="btn-primary" onclick="finishOnboarding()">Boshlash 🚀</button>
+        <button class="btn-secondary" onclick="obNext(1)" data-i18n="btnBack"></button>
+        <button class="btn-primary" onclick="finishOnboarding()" data-i18n="btnStart"></button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+const translations = {
+  uz: {
+    tagline: "Shaxsiy sun'iy intellekt murabbiyingiz",
+    modeTelegram: "Telegram",
+    modeWeb: "Veb rejimi",
+    navToday: "Bugun",
+    navCoach: "Murabbiy",
+    navProgress: "Natija",
+    navProfile: "Profil",
+    navNutrition: "Ovqat",
+
+    briefTitle: "Bugungi holat so'rovi",
+    briefIntro: "Mashg'ulot berishdan oldin bugungi holatingizni bilishim kerak.",
+    labelGoal: "Maqsad",
+    goalMuscle: "Mushak olish",
+    goalStrength: "Kuch oshirish",
+    goalFatloss: "Ozish",
+    goalRecomp: "Tana tarkibini o'zgartirish",
+    goalHealth: "Sog'lom ovqatlanish",
+    goalMixed: "Aralash",
+    labelMuscleGroup: "Bugun qaysi mushak guruhi? (ixtiyoriy, bo'sh qoldirsangiz murabbiy tanlaydi)",
+    placeholderMuscleGroup: "masalan: ko'krak, orqa, oyoq...",
+    labelEnergy: "Energiya",
+    labelSleep: "Bugungi uyqu (soat)",
+    labelLastWorkout: "Oxirgi mashg'ulot (nima va qachon)",
+    placeholderLastWorkout: "masalan: 2 kun oldin yelka",
+    labelTime: "Bugun qancha vaqtingiz bor?",
+    time45: "45 daqiqa",
+    time60: "60 daqiqa",
+    time90: "90 daqiqa",
+    time120: "2 soat",
+    labelPain: "Og'riq yoki noqulaylik bormi?",
+    placeholderPain: "masalan: yo'q / tizza biroz og'riydi",
+    btnGetWorkout: "Mashg'ulotni olish",
+    btnPreparing: "Tayyorlanmoqda...",
+    planTitle: "Bugungi reja",
+    btnNewBrief: "Qayta so'rovdan o'tish",
+    logTitle: "Mashqni qayd etish",
+    placeholderExercise: "Mashq nomi",
+    placeholderSets: "To'plam",
+    placeholderReps: "Takror",
+    placeholderWeight: "Vazn (kg)",
+    btnAdd: "Qo'shish",
+
+    coachTitle: "Murabbiy bilan suhbat",
+    placeholderChat: "Savolingizni yozing...",
+    btnSend: "Yuborish",
+
+    progressTitle: "Vazn / bel kiritish",
+    placeholderWeightKg: "Vazn (kg)",
+    placeholderWaist: "Bel (sm)",
+    btnSave: "Saqlash",
+    historyTitle: "Tarix",
+    emptyData: "Hali ma'lumot yo'q",
+    kgSuffix: "kg",
+    waistSuffix: "sm bel",
+
+    profileTitle: "Profil",
+    labelName: "Ism",
+    labelGender: "Jins",
+    genderMale: "Erkak",
+    genderFemale: "Ayol",
+    labelAge: "Yosh",
+    labelHeight: "Bo'y (sm)",
+    labelWeight: "Vazn (kg)",
+    labelWeeklyFreq: "Haftalik mashg'ulot kuni",
+    labelExperience: "Mashg'ulot tajribasi",
+    expBeginner: "Boshlang'ich",
+    expIntermediate: "O'rta",
+    expAdvanced: "Tajribali",
+    labelActivity: "Kundalik harakat",
+    activityLow: "Kam harakat (ofis ishi)",
+    activityMedium: "O'rtacha",
+    activityHigh: "Faol",
+
+    nutriTitle: "Kunlik ovqatlanish maqsadi",
+    nutriBasis: "Profilingizga asoslangan taxminiy hisob.",
+    nutriKcal: "kkal / kun",
+    nutriProtein: "Oqsil",
+    nutriCarb: "Uglevod",
+    nutriFat: "Yog'",
+    btnAdjust: "Qo'lda sozlash",
+    labelProteinPerKg: "Oqsil (tana vazni kilogramiga necha gram)",
+    labelKcalOverride: "Kaloriyani o'zgartirish (ixtiyoriy, bo'sh = avtomatik)",
+    placeholderKcal: "masalan: 2200",
+    btnRecalc: "Qayta hisoblash",
+    recipeTitle: "Retsept so'rang",
+    recipeIntro: "Uyingizda bor mahsulotlarni yoki qanday taom xohlayotganingizni yozing.",
+    placeholderRecipe: "masalan: tovuq ko'krak, guruch, sabzavotlar",
+    btnGetRecipe: "Retsept olish",
+    voiceTitle: "Ovozli murabbiy",
+    voiceDesc: "Ovozli murabbiy funksiyasi tez kunda qo'shiladi. Hozircha matnli suhbatdan foydalaning.",
+    btnSoon: "Tez kunda",
+    healthTitle: "Sog'liq ma'lumotlari",
+    healthDesc: "Tibbiy natija yoki rasm yuklang (sinov rejimi — tahlil qilinmaydi).",
+    healthFileAccepted: "{file} qabul qilindi (sinov rejimi). Tez orada tahlil funksiyasi qo'shiladi.",
+
+    obWelcome: "Assalomu alaykum! 👋",
+    obIntro: "Keling, avval siz bilan tanishib olaylik. Bu ma'lumotlar shaxsiy reja tuzish uchun kerak.",
+    labelYourName: "Ismingiz",
+    btnNext: "Keyingisi",
+    btnBack: "Orqaga",
+    obGoalTitle: "Maqsadingiz nima?",
+    labelActivityLevel: "Kundalik harakat darajangiz",
+    obTrainingTitle: "Mashg'ulot haqida",
+    labelYourExperience: "Tajribangiz",
+    labelWeeklyDays: "Haftada necha kun mashg'ulot qilishni xohlaysiz?",
+    btnStart: "Boshlash 🚀",
+
+    profileSaved: "Profil saqlandi ✅",
+    genericError: "Xatolik yuz berdi",
+    userDefault: "Foydalanuvchi",
+    unknown: "noma'lum",
+    none: "yo'q",
+    aiChooses: "murabbiy tanlasin",
+    ytLink: "Video orqali ko'rish",
+    imgLink: "Rasmlarni ko'rish",
+    searchTechnique: "mashqini to'g'ri bajarish texnikasi",
+  },
+  ru: {
+    tagline: "Ваш персональный тренер с искусственным интеллектом",
+    modeTelegram: "Telegram",
+    modeWeb: "Веб-режим",
+    navToday: "Сегодня",
+    navCoach: "Тренер",
+    navProgress: "Результат",
+    navProfile: "Профиль",
+    navNutrition: "Питание",
+
+    briefTitle: "Опрос о сегодняшнем состоянии",
+    briefIntro: "Прежде чем дать тренировку, мне нужно знать ваше сегодняшнее состояние.",
+    labelGoal: "Цель",
+    goalMuscle: "Набор мышц",
+    goalStrength: "Развитие силы",
+    goalFatloss: "Похудение",
+    goalRecomp: "Изменение состава тела",
+    goalHealth: "Здоровое питание",
+    goalMixed: "Смешанная",
+    labelMuscleGroup: "Какую группу мышц сегодня? (необязательно, оставьте пустым — тренер выберет сам)",
+    placeholderMuscleGroup: "например: грудь, спина, ноги...",
+    labelEnergy: "Энергия",
+    labelSleep: "Сон сегодня (часы)",
+    labelLastWorkout: "Последняя тренировка (что и когда)",
+    placeholderLastWorkout: "например: 2 дня назад плечи",
+    labelTime: "Сколько времени у вас есть сегодня?",
+    time45: "45 минут",
+    time60: "60 минут",
+    time90: "90 минут",
+    time120: "2 часа",
+    labelPain: "Есть ли боль или дискомфорт?",
+    placeholderPain: "например: нет / колено немного болит",
+    btnGetWorkout: "Получить тренировку",
+    btnPreparing: "Готовится...",
+    planTitle: "План на сегодня",
+    btnNewBrief: "Пройти опрос заново",
+    logTitle: "Запись упражнения",
+    placeholderExercise: "Название упражнения",
+    placeholderSets: "Подходы",
+    placeholderReps: "Повторения",
+    placeholderWeight: "Вес (кг)",
+    btnAdd: "Добавить",
+
+    coachTitle: "Беседа с тренером",
+    placeholderChat: "Напишите свой вопрос...",
+    btnSend: "Отправить",
+
+    progressTitle: "Ввод веса / талии",
+    placeholderWeightKg: "Вес (кг)",
+    placeholderWaist: "Талия (см)",
+    btnSave: "Сохранить",
+    historyTitle: "История",
+    emptyData: "Пока нет данных",
+    kgSuffix: "кг",
+    waistSuffix: "см талия",
+
+    profileTitle: "Профиль",
+    labelName: "Имя",
+    labelGender: "Пол",
+    genderMale: "Мужской",
+    genderFemale: "Женский",
+    labelAge: "Возраст",
+    labelHeight: "Рост (см)",
+    labelWeight: "Вес (кг)",
+    labelWeeklyFreq: "Тренировок в неделю",
+    labelExperience: "Опыт тренировок",
+    expBeginner: "Начинающий",
+    expIntermediate: "Средний",
+    expAdvanced: "Опытный",
+    labelActivity: "Повседневная активность",
+    activityLow: "Малоподвижная (офисная работа)",
+    activityMedium: "Средняя",
+    activityHigh: "Высокая",
+
+    nutriTitle: "Дневная цель питания",
+    nutriBasis: "Приблизительный расчёт на основе вашего профиля.",
+    nutriKcal: "ккал / день",
+    nutriProtein: "Белки",
+    nutriCarb: "Углеводы",
+    nutriFat: "Жиры",
+    btnAdjust: "Настроить вручную",
+    labelProteinPerKg: "Белок (грамм на килограмм веса)",
+    labelKcalOverride: "Изменить калорийность (необязательно, пусто = автоматически)",
+    placeholderKcal: "например: 2200",
+    btnRecalc: "Пересчитать",
+    recipeTitle: "Запросите рецепт",
+    recipeIntro: "Напишите, какие продукты у вас есть дома, или какое блюдо вы хотите.",
+    placeholderRecipe: "например: куриная грудка, рис, овощи",
+    btnGetRecipe: "Получить рецепт",
+    voiceTitle: "Голосовой тренер",
+    voiceDesc: "Функция голосового тренера скоро появится. Пока используйте текстовую беседу.",
+    btnSoon: "Скоро",
+    healthTitle: "Данные о здоровье",
+    healthDesc: "Загрузите медицинский результат или фото (пробный режим — не анализируется).",
+    healthFileAccepted: "{file} принят (пробный режим). Скоро появится функция анализа.",
+
+    obWelcome: "Здравствуйте! 👋",
+    obIntro: "Давайте сначала познакомимся. Эти данные нужны для составления личного плана.",
+    labelYourName: "Ваше имя",
+    btnNext: "Далее",
+    btnBack: "Назад",
+    obGoalTitle: "Какова ваша цель?",
+    labelActivityLevel: "Уровень вашей повседневной активности",
+    obTrainingTitle: "О тренировках",
+    labelYourExperience: "Ваш опыт",
+    labelWeeklyDays: "Сколько дней в неделю хотите тренироваться?",
+    btnStart: "Начать 🚀",
+
+    profileSaved: "Профиль сохранён ✅",
+    genericError: "Произошла ошибка",
+    userDefault: "Пользователь",
+    unknown: "неизвестно",
+    none: "нет",
+    aiChooses: "пусть выберет тренер",
+    ytLink: "Смотреть видео",
+    imgLink: "Смотреть изображения",
+    searchTechnique: "правильная техника выполнения упражнения",
+  },
+};
+
+let currentLang = (localStorage.getItem('forma_lang') || 'uz');
+function t(key) { return (translations[currentLang] && translations[currentLang][key]) || key; }
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('forma_lang', lang);
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  document.getElementById('langUz').classList.toggle('active', lang === 'uz');
+  document.getElementById('langRu').classList.toggle('active', lang === 'ru');
+  document.getElementById('modeBadge').textContent = isTelegram ? t('modeTelegram') : t('modeWeb');
+  renderLogList();
+  loadProgress();
+  refreshNutrition();
+}
+
+document.getElementById('langUz').addEventListener('click', () => applyLanguage('uz'));
+document.getElementById('langRu').addEventListener('click', () => applyLanguage('ru'));
+
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 const isTelegram = !!(tg && tg.initData);
-
-if (tg) {
-  tg.ready();
-  tg.expand();
-  document.getElementById('modeBadge').textContent = isTelegram ? 'Telegram' : 'Web demo';
-} else {
-  document.getElementById('modeBadge').textContent = 'Web demo';
-}
+if (tg) { tg.ready(); tg.expand(); }
 
 async function api(path, method, body) {
   const headers = { 'Content-Type': 'application/json' };
@@ -457,7 +727,7 @@ async function api(path, method, body) {
   });
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));
-    throw new Error(errBody.error || 'Xatolik yuz berdi');
+    throw new Error(errBody.error || t('genericError'));
   }
   return res.json();
 }
@@ -511,8 +781,8 @@ const Store = {
     lsSet('forma_progress', list);
     return entry;
   },
-  getChat() { return lsGet('forma_chat', []); },
-  setChat(history) { lsSet('forma_chat', history); },
+  getChat() { return lsGet('forma_chat_' + currentLang, []); },
+  setChat(history) { lsSet('forma_chat_' + currentLang, history); },
 };
 
 function escapeHtml(str) {
@@ -524,10 +794,10 @@ function inlineFormat(str) {
 }
 
 function exerciseLinksHtml(name) {
-  const q = encodeURIComponent(name + ' exercise texnika to\'g\'ri bajarish');
+  const q = encodeURIComponent(name + ' ' + t('searchTechnique'));
   const ytUrl = 'https://www.youtube.com/results?search_query=' + q;
-  const imgUrl = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(name + ' exercise form');
-  return `<div class="exercise-links"><a href="${ytUrl}" target="_blank" rel="noopener">🎥 YouTube'da ko'rish</a><a href="${imgUrl}" target="_blank" rel="noopener">🖼 Rasmlarni ko'rish</a></div>`;
+  const imgUrl = 'https://www.google.com/search?tbm=isch&q=' + q;
+  return `<div class="exercise-links"><a href="${ytUrl}" target="_blank" rel="noopener">🎥 ${t('ytLink')}</a><a href="${imgUrl}" target="_blank" rel="noopener">🖼 ${t('imgLink')}</a></div>`;
 }
 
 function renderMarkdown(text) {
@@ -634,7 +904,7 @@ function renderWorkoutPlan(text) {
 function switchScreen(name) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
-  document.querySelectorAll('nav.bottom .tab').forEach((t) => t.classList.toggle('active', t.dataset.screen === name));
+  document.querySelectorAll('nav.bottom .tab').forEach((tb) => tb.classList.toggle('active', tb.dataset.screen === name));
 }
 document.querySelectorAll('nav.bottom .tab').forEach((tab) => {
   tab.addEventListener('click', () => switchScreen(tab.dataset.screen));
@@ -650,7 +920,7 @@ function obNext(step) {
 
 async function finishOnboarding() {
   const profile = {
-    name: document.getElementById('obName').value || 'Foydalanuvchi',
+    name: document.getElementById('obName').value || t('userDefault'),
     gender: document.getElementById('obGender').value,
     age: Number(document.getElementById('obAge').value) || null,
     height: Number(document.getElementById('obHeight').value) || null,
@@ -669,14 +939,14 @@ async function finishOnboarding() {
 function fillProfileForm(p) {
   if (!p) return;
   document.getElementById('pName').value = p.name || '';
-  document.getElementById('pGender').value = p.gender || 'erkak';
+  document.getElementById('pGender').value = p.gender || 'male';
   document.getElementById('pAge').value = p.age || '';
   document.getElementById('pHeight').value = p.height || '';
   document.getElementById('pWeight').value = p.weight || '';
-  document.getElementById('pGoal').value = p.goal || 'mushak';
+  document.getElementById('pGoal').value = p.goal || 'muscle';
   document.getElementById('pFreq').value = p.weeklyFrequency || 3;
-  document.getElementById('pExp').value = p.experience || "boshlang'ich";
-  document.getElementById('pActivity').value = p.activity || "o'rtacha";
+  document.getElementById('pExp').value = p.experience || 'beginner';
+  document.getElementById('pActivity').value = p.activity || 'medium';
 }
 
 document.getElementById('saveProfileBtn').addEventListener('click', async () => {
@@ -693,7 +963,7 @@ document.getElementById('saveProfileBtn').addEventListener('click', async () => 
   };
   await Store.setProfile(profile);
   await refreshNutrition();
-  alert("Profil saqlandi ✅");
+  alert(t('profileSaved'));
 });
 
 document.getElementById('briefEnergy').addEventListener('input', (e) => {
@@ -711,6 +981,7 @@ async function sendCoachMessage(text, { silent } = {}) {
     message: text,
     profile,
     history: chat.slice(-12),
+    lang: currentLang,
   };
   const data = await api('/api/coach/chat', 'POST', body);
   chat.push({ role: 'assistant', content: data.reply });
@@ -751,21 +1022,27 @@ document.getElementById('chatInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('chatSendBtn').click();
 });
 
+const GOAL_LABEL_KEY = { muscle: 'goalMuscle', strength: 'goalStrength', fatloss: 'goalFatloss', recomp: 'goalRecomp', mixed: 'goalMixed', health: 'goalHealth' };
+const TIME_LABEL_KEY = { '45': 'time45', '60': 'time60', '90': 'time90', '120': 'time120' };
+
 document.getElementById('getWorkoutBtn').addEventListener('click', async () => {
-  const brief = {
-    maqsad: document.getElementById('briefGoal').value,
-    guruh: document.getElementById('briefMuscle').value || "AI tanlasin",
-    energiya: document.getElementById('briefEnergy').value,
-    uyqu: document.getElementById('briefSleep').value,
-    oxirgiMashgulot: document.getElementById('briefLast').value || "noma'lum",
-    vaqt: document.getElementById('briefTime').value,
-    ogriq: document.getElementById('briefPain').value || "yo'q",
-  };
-  const briefText = `Bugungi brief: maqsad=${brief.maqsad}, bugungi guruh taklifi=${brief.guruh}, energiya=${brief.energiya}/10, uyqu=${brief.uyqu} soat, oxirgi mashg'ulot=${brief.oxirgiMashgulot}, bugungi vaqt=${brief.vaqt}, og'riq/DOMS=${brief.ogriq}. Shu ma'lumotlarga asosan bugungi to'liq workout rejasini (mashqlar, set x reps, vazn/RPE, dam olish, texnika cue, progression) tuzib bering.`;
+  const goalCode = document.getElementById('briefGoal').value;
+  const muscleGroup = document.getElementById('briefMuscle').value || t('aiChooses');
+  const energy = document.getElementById('briefEnergy').value;
+  const sleep = document.getElementById('briefSleep').value;
+  const lastWorkout = document.getElementById('briefLast').value || t('unknown');
+  const timeCode = document.getElementById('briefTime').value;
+  const pain = document.getElementById('briefPain').value || t('none');
+
+  const brief = { goal: goalCode, muscleGroup, energy, sleep, lastWorkout, time: timeCode, pain };
+
+  const briefText = currentLang === 'ru'
+    ? `Сегодняшние данные: цель=${t(GOAL_LABEL_KEY[goalCode])}, желаемая группа мышц=${muscleGroup}, энергия=${energy}/10, сон=${sleep} часов, последняя тренировка=${lastWorkout}, время сегодня=${t(TIME_LABEL_KEY[timeCode])}, боль/дискомфорт=${pain}. На основе этих данных составь полный план тренировки на сегодня (упражнения, подходы и повторения, вес или уровень нагрузки, отдых, техника, принцип прогрессии). Всё только на русском языке, без иностранных слов и жаргона, названия упражнений переведи на русский.`
+    : `Bugungi ma'lumotlar: maqsad=${t(GOAL_LABEL_KEY[goalCode])}, istalgan mushak guruhi=${muscleGroup}, energiya=${energy}/10, uyqu=${sleep} soat, oxirgi mashg'ulot=${lastWorkout}, bugungi vaqt=${t(TIME_LABEL_KEY[timeCode])}, og'riq/noqulaylik=${pain}. Shu ma'lumotlarga asosan bugungi to'liq mashg'ulot rejasini (mashqlar, to'plam va takrorlar soni, vazn yoki kuch sarfi darajasi, dam olish, texnika, progression tamoyili) tuzib bering. Hammasi faqat o'zbek tilida, chet so'z va jargonlarsiz, mashq nomlarini ham o'zbekchaga tarjima qilib yozing.`;
 
   const btn = document.getElementById('getWorkoutBtn');
   btn.disabled = true;
-  btn.textContent = 'Tayyorlanmoqda...';
+  btn.textContent = t('btnPreparing');
   try {
     const reply = await sendCoachMessage(briefText, { silent: true });
     const plan = { brief, text: reply };
@@ -777,7 +1054,7 @@ document.getElementById('getWorkoutBtn').addEventListener('click', async () => {
     alert(err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Workoutni olish';
+    btn.textContent = t('btnGetWorkout');
   }
 });
 
@@ -807,9 +1084,10 @@ document.getElementById('addLogBtn').addEventListener('click', async () => {
 
 function renderLogList() {
   const el = document.getElementById('logList');
+  if (!el) return;
   if (!workoutLogCache.length) { el.innerHTML = ''; return; }
   el.innerHTML = workoutLogCache.slice(-8).reverse().map((e) =>
-    `<div class="list-item"><span>${e.exercise}</span><span>${e.sets}×${e.reps} — ${e.weight || 0} kg</span></div>`
+    `<div class="list-item"><span>${e.exercise}</span><span>${e.sets}×${e.reps} — ${e.weight || 0} ${t('kgSuffix')}</span></div>`
   ).join('');
 }
 
@@ -827,33 +1105,34 @@ document.getElementById('addProgressBtn').addEventListener('click', async () => 
 async function loadProgress() {
   const list = (await Store.getProgress()) || [];
   const el = document.getElementById('progressList');
-  if (!list.length) { el.innerHTML = '<div class="empty">Hali ma\'lumot yo\'q</div>'; return; }
+  if (!el) return;
+  if (!list.length) { el.innerHTML = `<div class="empty">${t('emptyData')}</div>`; return; }
   el.innerHTML = list.slice(-15).reverse().map((e) =>
-    `<div class="list-item"><span>${e.date || ''}</span><span>${e.weight ? e.weight + ' kg' : ''} ${e.waist ? '· ' + e.waist + ' sm bel' : ''}</span></div>`
+    `<div class="list-item"><span>${e.date || ''}</span><span>${e.weight ? e.weight + ' ' + t('kgSuffix') : ''} ${e.waist ? '· ' + e.waist + ' ' + t('waistSuffix') : ''}</span></div>`
   ).join('');
 }
 
 document.getElementById('healthFile').addEventListener('change', (e) => {
   const file = e.target.files[0];
   document.getElementById('healthStatus').textContent = file
-    ? `"${file.name}" qabul qilindi (demo). Tez orada AI tahlil funksiyasi qo'shiladi.`
+    ? t('healthFileAccepted').replace('{file}', `"${file.name}"`)
     : '';
 });
 
-const GOAL_PROTEIN_PER_KG = { mushak: 2.0, kuch: 2.0, ozish: 2.2, recomposition: 2.2, "sog'lom ovqatlanish": 1.6 };
-const ACTIVITY_MULTIPLIER = { 'kam harakat': 1.2, "o'rtacha": 1.55, faol: 1.75 };
-const GOAL_KCAL_ADJUST = { ozish: -500, mushak: 300, kuch: 200, recomposition: -200, "sog'lom ovqatlanish": 0 };
+const GOAL_PROTEIN_PER_KG = { muscle: 2.0, strength: 2.0, fatloss: 2.2, recomp: 2.2, health: 1.6 };
+const ACTIVITY_MULTIPLIER = { low: 1.2, medium: 1.55, high: 1.75 };
+const GOAL_KCAL_ADJUST = { fatloss: -500, muscle: 300, strength: 200, recomp: -200, health: 0 };
 
 function computeNutritionTargets(profile, overrides) {
   const p = profile || {};
   const weight = Number(p.weight) || 70;
   const height = Number(p.height) || 170;
   const age = Number(p.age) || 28;
-  const gender = p.gender || 'erkak';
-  const activity = p.activity || "o'rtacha";
-  const goal = p.goal || 'mushak';
+  const gender = p.gender || 'male';
+  const activity = p.activity || 'medium';
+  const goal = p.goal || 'muscle';
 
-  const bmr = gender === 'ayol'
+  const bmr = gender === 'female'
     ? 10 * weight + 6.25 * height - 5 * age - 161
     : 10 * weight + 6.25 * height - 5 * age + 5;
 
@@ -874,15 +1153,19 @@ function computeNutritionTargets(profile, overrides) {
 
 async function refreshNutrition(overrides) {
   const profile = await Store.getProfile();
-  const t = computeNutritionTargets(profile, overrides);
-  document.getElementById('nutriGrid').innerHTML = `
-    <div class="nutri-item"><div class="val">${t.kcal}</div><div class="lbl">kcal / kun</div></div>
-    <div class="nutri-item"><div class="val">${t.proteinG} g</div><div class="lbl">Protein</div></div>
-    <div class="nutri-item"><div class="val">${t.carbG} g</div><div class="lbl">Uglevod</div></div>
-    <div class="nutri-item"><div class="val">${t.fatG} g</div><div class="lbl">Yog'</div></div>
-  `;
-  document.getElementById('macroProteinPerKg').value = t.proteinPerKg;
-  return t;
+  const tgt = computeNutritionTargets(profile, overrides);
+  const grid = document.getElementById('nutriGrid');
+  if (grid) {
+    grid.innerHTML = `
+      <div class="nutri-item"><div class="val">${tgt.kcal}</div><div class="lbl">${t('nutriKcal')}</div></div>
+      <div class="nutri-item"><div class="val">${tgt.proteinG} ${t('kgSuffix') === 'kg' ? 'g' : 'г'}</div><div class="lbl">${t('nutriProtein')}</div></div>
+      <div class="nutri-item"><div class="val">${tgt.carbG} ${t('kgSuffix') === 'kg' ? 'g' : 'г'}</div><div class="lbl">${t('nutriCarb')}</div></div>
+      <div class="nutri-item"><div class="val">${tgt.fatG} ${t('kgSuffix') === 'kg' ? 'g' : 'г'}</div><div class="lbl">${t('nutriFat')}</div></div>
+    `;
+  }
+  const ppk = document.getElementById('macroProteinPerKg');
+  if (ppk) ppk.value = tgt.proteinPerKg;
+  return tgt;
 }
 
 document.getElementById('nutriAdjustToggle').addEventListener('click', () => {
@@ -901,23 +1184,29 @@ document.getElementById('recipeBtn').addEventListener('click', async () => {
   const resultEl = document.getElementById('recipeResult');
   const btn = document.getElementById('recipeBtn');
   const profile = await Store.getProfile();
-  const message = input
-    ? `Menda quyidagi mahsulotlar/afzalliklar bor: ${input}. Shularga mos, uyda tayyorlash mumkin bo'lgan 1 ta retsept tavsiya qiling — mahsulotlarni grammda yozing, jami va 1 porsiya kaloriya/protein/uglevod/yog'ni hisoblang.`
-    : "Bugungi ovqatlanish maqsadimga mos, uyda tayyorlash mumkin bo'lgan 1 ta retsept tavsiya qiling — mahsulotlarni grammda yozing, jami va 1 porsiya kaloriya/protein/uglevod/yog'ni hisoblang.";
+  const message = currentLang === 'ru'
+    ? (input
+      ? `У меня есть следующие продукты/предпочтения: ${input}. Предложи 1 рецепт, который можно приготовить дома — укажи продукты в граммах, посчитай общую и порционную калорийность, белки, углеводы и жиры. Только на русском языке, без иностранных слов.`
+      : "Предложи 1 рецепт, который можно приготовить дома, подходящий под мою сегодняшнюю цель по питанию — укажи продукты в граммах, посчитай общую и порционную калорийность, белки, углеводы и жиры. Только на русском языке, без иностранных слов.")
+    : (input
+      ? `Menda quyidagi mahsulotlar/afzalliklar bor: ${input}. Shularga mos, uyda tayyorlash mumkin bo'lgan 1 ta retsept tavsiya qiling — mahsulotlarni grammda yozing, jami va 1 porsiya kaloriya/oqsil/uglevod/yog'ni hisoblang. Faqat o'zbek tilida, chet so'zlarsiz yozing.`
+      : "Bugungi ovqatlanish maqsadimga mos, uyda tayyorlash mumkin bo'lgan 1 ta retsept tavsiya qiling — mahsulotlarni grammda yozing, jami va 1 porsiya kaloriya/oqsil/uglevod/yog'ni hisoblang. Faqat o'zbek tilida, chet so'zlarsiz yozing.");
   btn.disabled = true;
-  btn.textContent = 'Tayyorlanmoqda...';
+  btn.textContent = t('btnPreparing');
   try {
-    const data = await api('/api/coach/chat', 'POST', { message, profile, history: [] });
+    const data = await api('/api/coach/chat', 'POST', { message, profile, history: [], lang: currentLang });
     resultEl.innerHTML = renderMarkdown(data.reply);
   } catch (err) {
     resultEl.textContent = err.message;
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Retsept olish';
+    btn.textContent = t('btnGetRecipe');
   }
 });
 
 async function init() {
+  applyLanguage(currentLang);
+
   const profile = await Store.getProfile();
   if (!profile) {
     document.getElementById('onboardingOverlay').classList.remove('hidden');
