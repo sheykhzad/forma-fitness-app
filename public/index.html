@@ -125,6 +125,43 @@
     padding: 4px 9px; border-radius: 999px; text-decoration: none;
   }
   .msg.assistant .md-content h3, .msg.assistant .md-content h4 { margin-top: 10px; }
+
+  .exercise-card {
+    background: var(--card-2);
+    border: 1px solid #2c313c;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .exercise-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .exercise-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent); color: #06250f;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .exercise-name { font-size: 14px; font-weight: 600; }
+  .exercise-rows { margin-top: 8px; }
+  .exercise-row {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 7px 0; border-bottom: 1px solid #262a33; font-size: 13px;
+  }
+  .exercise-row:last-child { border-bottom: none; }
+  .exercise-row-label { color: var(--muted); flex-shrink: 0; }
+  .exercise-row-value { text-align: right; }
+  .exercise-row-note { font-size: 13px; color: var(--muted); padding: 4px 0; line-height: 1.5; }
+  .plan-intro { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+
+  .nutri-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+  .nutri-item {
+    background: var(--card-2); border-radius: 12px; padding: 10px 12px;
+  }
+  .nutri-item .val { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .nutri-item .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .nutri-toggle {
+    text-align: center; color: var(--muted); font-size: 12px;
+    margin-top: 12px; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -280,8 +317,31 @@
     </div>
   </section>
 
-  <!-- KO'PROQ / DEMO -->
+  <!-- OVQATLANISH -->
   <section class="screen" id="screen-more">
+    <div class="card">
+      <h2>🍽 Kunlik ovqatlanish maqsadi</h2>
+      <p class="muted" id="nutriBasis">Profilingizga asoslangan taxminiy hisob.</p>
+      <div class="nutri-grid" id="nutriGrid"></div>
+
+      <div class="nutri-toggle" id="nutriAdjustToggle">Qo'lda sozlash ⚙️</div>
+      <div id="nutriAdjust" style="display:none">
+        <label>Protein (g/kg tana vazni)</label>
+        <input id="macroProteinPerKg" type="number" step="0.1" value="1.8" />
+        <label>Kaloriya o'zgartirish (ixtiyoriy, bo'sh = avtomatik)</label>
+        <input id="macroKcalOverride" type="number" placeholder="masalan: 2200" />
+        <button class="btn-secondary" style="margin-top:10px" id="macroCalcBtn">Qayta hisoblash</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>👨‍🍳 Retsept so'rang</h2>
+      <p class="muted">Uyingizda bor mahsulotlarni yoki qanday taom xohlayotganingizni yozing.</p>
+      <input id="recipeInput" placeholder="masalan: tovuq ko'krak, guruch, sabzavotlar" />
+      <button class="btn-primary" style="margin-top:10px" id="recipeBtn">Retsept olish</button>
+      <div id="recipeResult" class="md-content" style="margin-top:10px"></div>
+    </div>
+
     <div class="card">
       <h2>🎤 Voice AI coach</h2>
       <p class="muted">Ovozli murabbiy funksiyasi tez kunda qo'shiladi. Hozircha matnli chatdan foydalaning.</p>
@@ -293,15 +353,6 @@
       <input type="file" id="healthFile" accept="image/*,.pdf" />
       <div id="healthStatus" class="muted" style="margin-top:8px"></div>
     </div>
-    <div class="card">
-      <h2>🍽 Makro kalkulyator (demo)</h2>
-      <label>Kunlik kaloriya (kcal)</label>
-      <input id="macroKcal" type="number" placeholder="masalan: 2200" />
-      <label>Protein (g/kg tana vazni)</label>
-      <input id="macroProteinPerKg" type="number" step="0.1" value="1.8" />
-      <button class="btn-secondary" style="margin-top:10px" id="macroCalcBtn">Hisoblash</button>
-      <div id="macroResult" class="muted" style="margin-top:10px"></div>
-    </div>
   </section>
 </div>
 
@@ -310,7 +361,7 @@
   <div class="tab" data-screen="coach"><span class="ic">💬</span>Coach</div>
   <div class="tab" data-screen="progress"><span class="ic">📈</span>Progress</div>
   <div class="tab" data-screen="profile"><span class="ic">👤</span>Profil</div>
-  <div class="tab" data-screen="more"><span class="ic">➕</span>Ko'proq</div>
+  <div class="tab" data-screen="more"><span class="ic">🍽</span>Ovqat</div>
 </nav>
 
 <div class="overlay hidden" id="onboardingOverlay">
@@ -519,6 +570,67 @@ function renderMarkdown(text) {
   return html;
 }
 
+function renderWorkoutPlan(text) {
+  const escaped = escapeHtml(text || '');
+  const lines = escaped.split('\n');
+  let intro = '';
+  const cards = [];
+  let current = null;
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line || /^-{3,}$/.test(line)) continue;
+
+    const headerMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headerMatch) {
+      const level = headerMatch[1].length;
+      const content = headerMatch[2];
+      const exerciseMatch = content.match(/^\d+\.\s*\*{0,2}(.+?)\*{0,2}$/);
+      if (level >= 4 && exerciseMatch) {
+        current = { title: exerciseMatch[1].trim(), rows: [] };
+        cards.push(current);
+      } else if (!current) {
+        intro += `<p>${inlineFormat(content)}</p>`;
+      }
+      continue;
+    }
+
+    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+    const text2 = bulletMatch ? bulletMatch[1] : line;
+    const labelMatch = text2.match(/^\*\*(.+?):\*\*\s*(.*)$/);
+
+    if (current) {
+      if (labelMatch) {
+        current.rows.push({ label: labelMatch[1], value: labelMatch[2] });
+      } else {
+        current.rows.push({ label: '', value: text2 });
+      }
+    } else {
+      intro += `<p>${inlineFormat(text2)}</p>`;
+    }
+  }
+
+  if (!cards.length) return renderMarkdown(text);
+
+  let html = intro ? `<div class="plan-intro">${intro}</div>` : '';
+  cards.forEach((card, i) => {
+    html += `<div class="exercise-card">`;
+    html += `<div class="exercise-card-head"><span class="exercise-num">${i + 1}</span><span class="exercise-name">${inlineFormat(card.title)}</span></div>`;
+    html += exerciseLinksHtml(card.title);
+    html += `<div class="exercise-rows">`;
+    card.rows.forEach((r) => {
+      if (r.label) {
+        html += `<div class="exercise-row"><span class="exercise-row-label">${inlineFormat(r.label)}</span><span class="exercise-row-value">${inlineFormat(r.value)}</span></div>`;
+      } else if (r.value) {
+        html += `<div class="exercise-row-note">${inlineFormat(r.value)}</div>`;
+      }
+    });
+    html += `</div></div>`;
+  });
+
+  return html;
+}
+
 function switchScreen(name) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
@@ -551,6 +663,7 @@ async function finishOnboarding() {
   await Store.setProfile(profile);
   document.getElementById('onboardingOverlay').classList.add('hidden');
   fillProfileForm(profile);
+  refreshNutrition();
 }
 
 function fillProfileForm(p) {
@@ -579,6 +692,7 @@ document.getElementById('saveProfileBtn').addEventListener('click', async () => 
     activity: document.getElementById('pActivity').value,
   };
   await Store.setProfile(profile);
+  await refreshNutrition();
   alert("Profil saqlandi ✅");
 });
 
@@ -656,7 +770,7 @@ document.getElementById('getWorkoutBtn').addEventListener('click', async () => {
     const reply = await sendCoachMessage(briefText, { silent: true });
     const plan = { brief, text: reply };
     await Store.setTodayPlan(plan);
-    document.getElementById('planText').innerHTML = renderMarkdown(reply);
+    document.getElementById('planText').innerHTML = renderWorkoutPlan(reply);
     document.getElementById('planCard').style.display = 'block';
     document.getElementById('briefCard').style.display = 'none';
   } catch (err) {
@@ -726,23 +840,81 @@ document.getElementById('healthFile').addEventListener('change', (e) => {
     : '';
 });
 
-document.getElementById('macroCalcBtn').addEventListener('click', async () => {
-  const kcal = Number(document.getElementById('macroKcal').value);
-  const proteinPerKg = Number(document.getElementById('macroProteinPerKg').value) || 1.8;
-  const profile = await Store.getProfile();
-  const weight = (profile && profile.weight) || 70;
-  if (!kcal) { document.getElementById('macroResult').textContent = 'Kaloriya kiriting.'; return; }
+const GOAL_PROTEIN_PER_KG = { mushak: 2.0, kuch: 2.0, ozish: 2.2, recomposition: 2.2, "sog'lom ovqatlanish": 1.6 };
+const ACTIVITY_MULTIPLIER = { 'kam harakat': 1.2, "o'rtacha": 1.55, faol: 1.75 };
+const GOAL_KCAL_ADJUST = { ozish: -500, mushak: 300, kuch: 200, recomposition: -200, "sog'lom ovqatlanish": 0 };
+
+function computeNutritionTargets(profile, overrides) {
+  const p = profile || {};
+  const weight = Number(p.weight) || 70;
+  const height = Number(p.height) || 170;
+  const age = Number(p.age) || 28;
+  const gender = p.gender || 'erkak';
+  const activity = p.activity || "o'rtacha";
+  const goal = p.goal || 'mushak';
+
+  const bmr = gender === 'ayol'
+    ? 10 * weight + 6.25 * height - 5 * age - 161
+    : 10 * weight + 6.25 * height - 5 * age + 5;
+
+  const tdee = bmr * (ACTIVITY_MULTIPLIER[activity] || 1.4);
+  const goalAdjust = GOAL_KCAL_ADJUST[goal] ?? 0;
+
+  const proteinPerKg = (overrides && overrides.proteinPerKg) || GOAL_PROTEIN_PER_KG[goal] || 1.8;
+  const kcal = Math.round((overrides && overrides.kcal) || (tdee + goalAdjust));
   const proteinG = Math.round(weight * proteinPerKg);
   const proteinKcal = proteinG * 4;
   const fatKcal = Math.round(kcal * 0.25);
   const fatG = Math.round(fatKcal / 9);
   const carbKcal = Math.max(kcal - proteinKcal - fatKcal, 0);
   const carbG = Math.round(carbKcal / 4);
-  document.getElementById('macroResult').innerHTML =
-    `<b>${kcal} kcal</b> uchun taxminiy taqsimot:<br/>` +
-    `Protein: ${proteinG} g (${proteinKcal} kcal)<br/>` +
-    `Yog': ${fatG} g (${fatKcal} kcal)<br/>` +
-    `Uglevod: ${carbG} g (${carbKcal} kcal)`;
+
+  return { kcal, proteinG, fatG, carbG, proteinPerKg };
+}
+
+async function refreshNutrition(overrides) {
+  const profile = await Store.getProfile();
+  const t = computeNutritionTargets(profile, overrides);
+  document.getElementById('nutriGrid').innerHTML = `
+    <div class="nutri-item"><div class="val">${t.kcal}</div><div class="lbl">kcal / kun</div></div>
+    <div class="nutri-item"><div class="val">${t.proteinG} g</div><div class="lbl">Protein</div></div>
+    <div class="nutri-item"><div class="val">${t.carbG} g</div><div class="lbl">Uglevod</div></div>
+    <div class="nutri-item"><div class="val">${t.fatG} g</div><div class="lbl">Yog'</div></div>
+  `;
+  document.getElementById('macroProteinPerKg').value = t.proteinPerKg;
+  return t;
+}
+
+document.getElementById('nutriAdjustToggle').addEventListener('click', () => {
+  const el = document.getElementById('nutriAdjust');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('macroCalcBtn').addEventListener('click', () => {
+  const proteinPerKg = Number(document.getElementById('macroProteinPerKg').value) || 1.8;
+  const kcalOverride = Number(document.getElementById('macroKcalOverride').value) || null;
+  refreshNutrition({ proteinPerKg, kcal: kcalOverride });
+});
+
+document.getElementById('recipeBtn').addEventListener('click', async () => {
+  const input = document.getElementById('recipeInput').value.trim();
+  const resultEl = document.getElementById('recipeResult');
+  const btn = document.getElementById('recipeBtn');
+  const profile = await Store.getProfile();
+  const message = input
+    ? `Menda quyidagi mahsulotlar/afzalliklar bor: ${input}. Shularga mos, uyda tayyorlash mumkin bo'lgan 1 ta retsept tavsiya qiling — mahsulotlarni grammda yozing, jami va 1 porsiya kaloriya/protein/uglevod/yog'ni hisoblang.`
+    : "Bugungi ovqatlanish maqsadimga mos, uyda tayyorlash mumkin bo'lgan 1 ta retsept tavsiya qiling — mahsulotlarni grammda yozing, jami va 1 porsiya kaloriya/protein/uglevod/yog'ni hisoblang.";
+  btn.disabled = true;
+  btn.textContent = 'Tayyorlanmoqda...';
+  try {
+    const data = await api('/api/coach/chat', 'POST', { message, profile, history: [] });
+    resultEl.innerHTML = renderMarkdown(data.reply);
+  } catch (err) {
+    resultEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Retsept olish';
+  }
 });
 
 async function init() {
@@ -755,7 +927,7 @@ async function init() {
 
   const plan = await Store.getTodayPlan();
   if (plan && plan.text) {
-    document.getElementById('planText').innerHTML = renderMarkdown(plan.text);
+    document.getElementById('planText').innerHTML = renderWorkoutPlan(plan.text);
     document.getElementById('planCard').style.display = 'block';
     document.getElementById('briefCard').style.display = 'none';
   }
@@ -765,6 +937,7 @@ async function init() {
 
   renderChat(Store.getChat());
   loadProgress();
+  refreshNutrition();
 }
 
 init();
