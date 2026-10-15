@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Forma — AI fitness coach</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #1a1d24;
+    --card-2: #20242d;
+    --text: #f3f4f6;
+    --muted: #9aa0ab;
+    --accent: #4ade80;
+    --accent-2: #22c55e;
+    --danger: #f87171;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    padding-bottom: 76px;
+  }
+  .app { max-width: 480px; margin: 0 auto; padding: 16px; }
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 0 16px;
+  }
+  header.top h1 { font-size: 20px; margin: 0; }
+  header.top .sub { color: var(--muted); font-size: 12px; }
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card h2 { margin: 0 0 10px; font-size: 16px; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input, select, textarea {
+    width: 100%;
+    background: var(--card-2);
+    border: 1px solid #2c313c;
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  button {
+    border: none; border-radius: 12px; padding: 12px 16px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: #06250f; width: 100%; }
+  .btn-secondary { background: var(--card-2); color: var(--text); width: 100%; }
+  .btn-danger { background: transparent; color: var(--danger); }
+  .btn-sm { padding: 8px 12px; font-size: 13px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .pill {
+    display: inline-block; background: var(--card-2); color: var(--muted);
+    border-radius: 999px; padding: 4px 10px; font-size: 11px; margin-right: 6px;
+  }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  nav.bottom {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid #262a33;
+    display: flex; justify-content: space-around; padding: 8px 4px;
+    max-width: 480px; margin: 0 auto;
+  }
+  nav.bottom .tab {
+    flex: 1; text-align: center; color: var(--muted);
+    font-size: 11px; padding: 6px 2px; cursor: pointer; border-radius: 10px;
+  }
+  nav.bottom .tab.active { color: var(--accent); background: rgba(74,222,128,0.08); }
+  nav.bottom .tab .ic { font-size: 18px; display: block; }
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: flex-end; justify-content: center; z-index: 50;
+  }
+  .overlay.hidden { display: none; }
+  .sheet {
+    background: var(--bg); width: 100%; max-width: 480px;
+    border-radius: 20px 20px 0 0; padding: 20px 16px 24px; max-height: 88vh; overflow-y: auto;
+  }
+  .step-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; }
+  .step-dots span { width: 7px; height: 7px; border-radius: 50%; background: #2c313c; }
+  .step-dots span.on { background: var(--accent); }
+  .chat-log { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; max-height: 50vh; overflow-y: auto; }
+  .msg { padding: 10px 12px; border-radius: 14px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; max-width: 85%; }
+  .msg.user { background: var(--accent); color: #06250f; align-self: flex-end; }
+  .msg.assistant { background: var(--card-2); align-self: flex-start; }
+  .chat-input-row { display: flex; gap: 8px; }
+  .chat-input-row input { flex: 1; }
+  .chat-input-row button { width: auto; padding: 10px 14px; }
+  .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #262a33; font-size: 13px; }
+  .list-item:last-child { border-bottom: none; }
+  .slider-val { text-align: center; font-size: 22px; font-weight: 700; color: var(--accent); margin: 4px 0; }
+  .empty { text-align: center; color: var(--muted); padding: 20px 0; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>💪 Forma</h1>
+      <div class="sub">Shaxsiy AI fitness murabbiyingiz</div>
+    </div>
+    <div class="pill" id="modeBadge">—</div>
+  </header>
+
+  <!-- BUGUN -->
+  <section class="screen active" id="screen-today">
+    <div class="card" id="briefCard">
+      <h2>Bugungi brief</h2>
+      <p class="muted">Workoutni berishdan oldin bugungi holatingizni bilishim kerak.</p>
+
+      <label>Maqsad</label>
+      <select id="briefGoal">
+        <option value="mushak">Mushak olish</option>
+        <option value="kuch">Kuch</option>
+        <option value="ozish">Ozish</option>
+        <option value="recomposition">Recomposition</option>
+        <option value="aralash">Aralash</option>
+      </select>
+
+      <label>Bugun qaysi guruh? (ixtiyoriy, bo'sh qoldirsangiz AI tanlaydi)</label>
+      <input id="briefMuscle" placeholder="masalan: ko'krak, orqa, oyoq..." />
+
+      <label>Energiya: <span id="energyVal">7</span>/10</label>
+      <input id="briefEnergy" type="range" min="1" max="10" value="7" />
+
+      <label>Bugun uyqu (soat)</label>
+      <input id="briefSleep" type="number" min="0" max="14" value="7" />
+
+      <label>Oxirgi mashg'ulot (nima va qachon)</label>
+      <input id="briefLast" placeholder="masalan: 2 kun oldin yelka" />
+
+      <label>Bugun qancha vaqtingiz bor?</label>
+      <select id="briefTime">
+        <option value="45 daqiqa">45 daqiqa</option>
+        <option value="60 daqiqa" selected>60 daqiqa</option>
+        <option value="90 daqiqa">90 daqiqa</option>
+        <option value="2 soat">2 soat</option>
+      </select>
+
+      <label>DOMS / og'riq bormi?</label>
+      <input id="briefPain" placeholder="masalan: yo'q / tizza biroz og'riydi" />
+
+      <button class="btn-primary" style="margin-top:14px" id="getWorkoutBtn">Workoutni olish</button>
+    </div>
+
+    <div class="card" id="planCard" style="display:none">
+      <h2>Bugungi reja</h2>
+      <div id="planText" class="muted" style="white-space:pre-wrap; color:var(--text)"></div>
+      <button class="btn-secondary" style="margin-top:12px" id="newBriefBtn">Qayta brief qilish</button>
+    </div>
+
+    <div class="card">
+      <h2>Set qayd etish</h2>
+      <div class="row">
+        <input id="logExercise" placeholder="Mashq" />
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="logSets" type="number" placeholder="Set" min="1" />
+        <input id="logReps" type="number" placeholder="Reps" min="1" />
+        <input id="logWeight" type="number" placeholder="Vazn (kg)" min="0" />
+      </div>
+      <button class="btn-secondary" style="margin-top:10px" id="addLogBtn">Qo'shish</button>
+      <div id="logList" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- COACH -->
+  <section class="screen" id="screen-coach">
+    <div class="card">
+      <h2>🤖 AI Coach bilan suhbat</h2>
+      <div class="chat-log" id="chatLog"></div>
+      <div class="chat-input-row">
+        <input id="chatInput" placeholder="Savolingizni yozing..." />
+        <button class="btn-primary" id="chatSendBtn">Yubor</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="screen" id="screen-progress">
+    <div class="card">
+      <h2>📈 Vazn / bel kiritish</h2>
+      <div class="row">
+        <input id="progWeight" type="number" step="0.1" placeholder="Vazn (kg)" />
+        <input id="progWaist" type="number" step="0.1" placeholder="Bel (sm)" />
+      </div>
+      <button class="btn-secondary" style="margin-top:10px" id="addProgressBtn">Saqlash</button>
+    </div>
+    <div class="card">
+      <h2>Tarix</h2>
+      <div id="progressList"><div class="empty">Hali ma'lumot yo'q</div></div>
+    </div>
+  </section>
+
+  <!-- PROFIL -->
+  <section class="screen" id="screen-profile">
+    <div class="card">
+      <h2>👤 Profil</h2>
+      <label>Ism</label>
+      <input id="pName" />
+      <div class="row">
+        <div>
+          <label>Jins</label>
+          <select id="pGender"><option value="erkak">Erkak</option><option value="ayol">Ayol</option></select>
+        </div>
+        <div>
+          <label>Yosh</label>
+          <input id="pAge" type="number" min="10" max="100" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Bo'y (sm)</label>
+          <input id="pHeight" type="number" />
+        </div>
+        <div>
+          <label>Vazn (kg)</label>
+          <input id="pWeight" type="number" />
+        </div>
+      </div>
+      <label>Maqsad</label>
+      <select id="pGoal">
+        <option value="mushak">Mushak olish</option>
+        <option value="kuch">Kuch</option>
+        <option value="ozish">Ozish</option>
+        <option value="recomposition">Recomposition</option>
+        <option value="sog'lom ovqatlanish">Sog'lom ovqatlanish</option>
+      </select>
+      <label>Haftalik trening kuni</label>
+      <input id="pFreq" type="number" min="1" max="7" />
+      <label>Trening tajribasi</label>
+      <select id="pExp">
+        <option value="boshlang'ich">Boshlang'ich</option>
+        <option value="o'rta">O'rta</option>
+        <option value="tajribali">Tajribali</option>
+      </select>
+      <label>Kundalik harakat</label>
+      <select id="pActivity">
+        <option value="kam harakat">Kam harakat (ofis)</option>
+        <option value="o'rtacha">O'rtacha</option>
+        <option value="faol">Faol</option>
+      </select>
+      <button class="btn-primary" style="margin-top:14px" id="saveProfileBtn">Saqlash</button>
+    </div>
+  </section>
+
+  <!-- KO'PROQ / DEMO -->
+  <section class="screen" id="screen-more">
+    <div class="card">
+      <h2>🎤 Voice AI coach</h2>
+      <p class="muted">Ovozli murabbiy funksiyasi tez kunda qo'shiladi. Hozircha matnli chatdan foydalaning.</p>
+      <button class="btn-secondary" disabled>Tez kunda</button>
+    </div>
+    <div class="card">
+      <h2>🩺 Sog'liq ma'lumotlari</h2>
+      <p class="muted">Tibbiy natija yoki rasm yuklang (demo — tahlil qilinmaydi).</p>
+      <input type="file" id="healthFile" accept="image/*,.pdf" />
+      <div id="healthStatus" class="muted" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>🍽 Makro kalkulyator (demo)</h2>
+      <label>Kunlik kaloriya (kcal)</label>
+      <input id="macroKcal" type="number" placeholder="masalan: 2200" />
+      <label>Protein (g/kg tana vazni)</label>
+      <input id="macroProteinPerKg" type="number" step="0.1" value="1.8" />
+      <button class="btn-secondary" style="margin-top:10px" id="macroCalcBtn">Hisoblash</button>
+      <div id="macroResult" class="muted" style="margin-top:10px"></div>
+    </div>
+  </section>
+</div>
+
+<nav class="bottom">
+  <div class="tab active" data-screen="today"><span class="ic">🏠</span>Bugun</div>
+  <div class="tab" data-screen="coach"><span class="ic">💬</span>Coach</div>
+  <div class="tab" data-screen="progress"><span class="ic">📈</span>Progress</div>
+  <div class="tab" data-screen="profile"><span class="ic">👤</span>Profil</div>
+  <div class="tab" data-screen="more"><span class="ic">➕</span>Ko'proq</div>
+</nav>
+
+<div class="overlay hidden" id="onboardingOverlay">
+  <div class="sheet">
+    <div class="step-dots"><span class="on" data-step="0"></span><span data-step="1"></span><span data-step="2"></span></div>
+
+    <div id="ob-step-0">
+      <h2 style="margin-top:0">Assalomu alaykum! 👋</h2>
+      <p class="muted">Keling, avval siz bilan tanishib olaylik. Bu ma'lumotlar shaxsiy reja tuzish uchun kerak.</p>
+      <label>Ismingiz</label>
+      <input id="obName" />
+      <div class="row">
+        <div>
+          <label>Jins</label>
+          <select id="obGender"><option value="erkak">Erkak</option><option value="ayol">Ayol</option></select>
+        </div>
+        <div>
+          <label>Yosh</label>
+          <input id="obAge" type="number" min="10" max="100" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Bo'y (sm)</label>
+          <input id="obHeight" type="number" />
+        </div>
+        <div>
+          <label>Vazn (kg)</label>
+          <input id="obWeight" type="number" />
+        </div>
+      </div>
+      <button class="btn-primary" style="margin-top:16px" onclick="obNext(1)">Keyingisi</button>
+    </div>
+
+    <div id="ob-step-1" style="display:none">
+      <h2 style="margin-top:0">Maqsadingiz nima?</h2>
+      <select id="obGoal">
+        <option value="mushak">Mushak olish</option>
+        <option value="kuch">Kuch</option>
+        <option value="ozish">Ozish</option>
+        <option value="recomposition">Recomposition</option>
+        <option value="sog'lom ovqatlanish">Sog'lom ovqatlanish</option>
+      </select>
+      <label>Kundalik harakat darajangiz</label>
+      <select id="obActivity">
+        <option value="kam harakat">Kam harakat (ofis)</option>
+        <option value="o'rtacha">O'rtacha</option>
+        <option value="faol">Faol</option>
+      </select>
+      <div class="row" style="margin-top:16px">
+        <button class="btn-secondary" onclick="obNext(0)">Orqaga</button>
+        <button class="btn-primary" onclick="obNext(2)">Keyingisi</button>
+      </div>
+    </div>
+
+    <div id="ob-step-2" style="display:none">
+      <h2 style="margin-top:0">Trening haqida</h2>
+      <label>Tajribangiz</label>
+      <select id="obExp">
+        <option value="boshlang'ich">Boshlang'ich</option>
+        <option value="o'rta">O'rta</option>
+        <option value="tajribali">Tajribali</option>
+      </select>
+      <label>Haftada necha kun trening qilishni xohlaysiz?</label>
+      <input id="obFreq" type="number" min="1" max="7" value="3" />
+      <div class="row" style="margin-top:16px">
+        <button class="btn-secondary" onclick="obNext(1)">Orqaga</button>
+        <button class="btn-primary" onclick="finishOnboarding()">Boshlash 🚀</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+const isTelegram = !!(tg && tg.initData);
+
+if (tg) {
+  tg.ready();
+  tg.expand();
+  document.getElementById('modeBadge').textContent = isTelegram ? 'Telegram' : 'Web demo';
+} else {
+  document.getElementById('modeBadge').textContent = 'Web demo';
+}
+
+async function api(path, method, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (isTelegram) headers['X-Telegram-Init-Data'] = tg.initData;
+  const res = await fetch(path, {
+    method: method || 'GET',
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.error || 'Xatolik yuz berdi');
+  }
+  return res.json();
+}
+
+function lsGet(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function lsSet(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+
+const Store = {
+  async getProfile() {
+    if (isTelegram) return (await api('/api/profile')).profile;
+    return lsGet('forma_profile', null);
+  },
+  async setProfile(profile) {
+    if (isTelegram) return (await api('/api/profile', 'POST', profile)).profile;
+    lsSet('forma_profile', profile);
+    return profile;
+  },
+  async getTodayPlan() {
+    if (isTelegram) return (await api('/api/workout/today')).todayPlan;
+    return lsGet('forma_today_plan', null);
+  },
+  async setTodayPlan(plan) {
+    if (isTelegram) return (await api('/api/workout/today', 'POST', plan)).todayPlan;
+    lsSet('forma_today_plan', plan);
+    return plan;
+  },
+  async logWorkout(entry) {
+    if (isTelegram) return api('/api/workout/log', 'POST', entry);
+    const list = lsGet('forma_workout_log', []);
+    list.push(entry);
+    lsSet('forma_workout_log', list);
+    return { ok: true, entry };
+  },
+  async getWorkoutLog() {
+    if (isTelegram) {
+      const p = await api('/api/progress');
+      return (p.progress || []).filter((x) => x.type === 'workout' || x.exercise);
+    }
+    return lsGet('forma_workout_log', []);
+  },
+  async getProgress() {
+    if (isTelegram) return (await api('/api/progress')).progress;
+    return lsGet('forma_progress', []);
+  },
+  async addProgress(entry) {
+    if (isTelegram) return (await api('/api/progress', 'POST', entry)).entry;
+    const list = lsGet('forma_progress', []);
+    list.push(entry);
+    lsSet('forma_progress', list);
+    return entry;
+  },
+  getChat() { return lsGet('forma_chat', []); },
+  setChat(history) { lsSet('forma_chat', history); },
+};
+
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('nav.bottom .tab').forEach((t) => t.classList.toggle('active', t.dataset.screen === name));
+}
+document.querySelectorAll('nav.bottom .tab').forEach((tab) => {
+  tab.addEventListener('click', () => switchScreen(tab.dataset.screen));
+});
+
+let obStep = 0;
+function obNext(step) {
+  document.getElementById('ob-step-' + obStep).style.display = 'none';
+  obStep = step;
+  document.getElementById('ob-step-' + obStep).style.display = 'block';
+  document.querySelectorAll('.step-dots span').forEach((d) => d.classList.toggle('on', Number(d.dataset.step) === obStep));
+}
+
+async function finishOnboarding() {
+  const profile = {
+    name: document.getElementById('obName').value || 'Foydalanuvchi',
+    gender: document.getElementById('obGender').value,
+    age: Number(document.getElementById('obAge').value) || null,
+    height: Number(document.getElementById('obHeight').value) || null,
+    weight: Number(document.getElementById('obWeight').value) || null,
+    goal: document.getElementById('obGoal').value,
+    activity: document.getElementById('obActivity').value,
+    experience: document.getElementById('obExp').value,
+    weeklyFrequency: Number(document.getElementById('obFreq').value) || 3,
+  };
+  await Store.setProfile(profile);
+  document.getElementById('onboardingOverlay').classList.add('hidden');
+  fillProfileForm(profile);
+}
+
+function fillProfileForm(p) {
+  if (!p) return;
+  document.getElementById('pName').value = p.name || '';
+  document.getElementById('pGender').value = p.gender || 'erkak';
+  document.getElementById('pAge').value = p.age || '';
+  document.getElementById('pHeight').value = p.height || '';
+  document.getElementById('pWeight').value = p.weight || '';
+  document.getElementById('pGoal').value = p.goal || 'mushak';
+  document.getElementById('pFreq').value = p.weeklyFrequency || 3;
+  document.getElementById('pExp').value = p.experience || "boshlang'ich";
+  document.getElementById('pActivity').value = p.activity || "o'rtacha";
+}
+
+document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+  const profile = {
+    name: document.getElementById('pName').value,
+    gender: document.getElementById('pGender').value,
+    age: Number(document.getElementById('pAge').value) || null,
+    height: Number(document.getElementById('pHeight').value) || null,
+    weight: Number(document.getElementById('pWeight').value) || null,
+    goal: document.getElementById('pGoal').value,
+    weeklyFrequency: Number(document.getElementById('pFreq').value) || 3,
+    experience: document.getElementById('pExp').value,
+    activity: document.getElementById('pActivity').value,
+  };
+  await Store.setProfile(profile);
+  alert("Profil saqlandi ✅");
+});
+
+document.getElementById('briefEnergy').addEventListener('input', (e) => {
+  document.getElementById('energyVal').textContent = e.target.value;
+});
+
+async function sendCoachMessage(text, { silent } = {}) {
+  const chat = Store.getChat();
+  if (!silent) {
+    chat.push({ role: 'user', content: text });
+    renderChat(chat);
+  }
+  const profile = await Store.getProfile();
+  const body = {
+    message: text,
+    profile,
+    history: chat.slice(-12),
+  };
+  const data = await api('/api/coach/chat', 'POST', body);
+  chat.push({ role: 'assistant', content: data.reply });
+  Store.setChat(chat);
+  renderChat(chat);
+  return data.reply;
+}
+
+function renderChat(chat) {
+  const log = document.getElementById('chatLog');
+  log.innerHTML = '';
+  chat.forEach((m) => {
+    const div = document.createElement('div');
+    div.className = 'msg ' + (m.role === 'user' ? 'user' : 'assistant');
+    div.textContent = m.content;
+    log.appendChild(div);
+  });
+  log.scrollTop = log.scrollHeight;
+}
+
+document.getElementById('chatSendBtn').addEventListener('click', async () => {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  try {
+    await sendCoachMessage(text);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('chatSendBtn').click();
+});
+
+document.getElementById('getWorkoutBtn').addEventListener('click', async () => {
+  const brief = {
+    maqsad: document.getElementById('briefGoal').value,
+    guruh: document.getElementById('briefMuscle').value || "AI tanlasin",
+    energiya: document.getElementById('briefEnergy').value,
+    uyqu: document.getElementById('briefSleep').value,
+    oxirgiMashgulot: document.getElementById('briefLast').value || "noma'lum",
+    vaqt: document.getElementById('briefTime').value,
+    ogriq: document.getElementById('briefPain').value || "yo'q",
+  };
+  const briefText = `Bugungi brief: maqsad=${brief.maqsad}, bugungi guruh taklifi=${brief.guruh}, energiya=${brief.energiya}/10, uyqu=${brief.uyqu} soat, oxirgi mashg'ulot=${brief.oxirgiMashgulot}, bugungi vaqt=${brief.vaqt}, og'riq/DOMS=${brief.ogriq}. Shu ma'lumotlarga asosan bugungi to'liq workout rejasini (mashqlar, set x reps, vazn/RPE, dam olish, texnika cue, progression) tuzib bering.`;
+
+  const btn = document.getElementById('getWorkoutBtn');
+  btn.disabled = true;
+  btn.textContent = 'Tayyorlanmoqda...';
+  try {
+    const reply = await sendCoachMessage(briefText, { silent: true });
+    const plan = { brief, text: reply };
+    await Store.setTodayPlan(plan);
+    document.getElementById('planText').textContent = reply;
+    document.getElementById('planCard').style.display = 'block';
+    document.getElementById('briefCard').style.display = 'none';
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Workoutni olish';
+  }
+});
+
+document.getElementById('newBriefBtn').addEventListener('click', () => {
+  document.getElementById('planCard').style.display = 'none';
+  document.getElementById('briefCard').style.display = 'block';
+});
+
+let workoutLogCache = [];
+document.getElementById('addLogBtn').addEventListener('click', async () => {
+  const entry = {
+    exercise: document.getElementById('logExercise').value,
+    sets: document.getElementById('logSets').value,
+    reps: document.getElementById('logReps').value,
+    weight: document.getElementById('logWeight').value,
+    date: new Date().toISOString().slice(0, 10),
+  };
+  if (!entry.exercise) return;
+  await Store.logWorkout(entry);
+  workoutLogCache.push(entry);
+  renderLogList();
+  document.getElementById('logExercise').value = '';
+  document.getElementById('logSets').value = '';
+  document.getElementById('logReps').value = '';
+  document.getElementById('logWeight').value = '';
+});
+
+function renderLogList() {
+  const el = document.getElementById('logList');
+  if (!workoutLogCache.length) { el.innerHTML = ''; return; }
+  el.innerHTML = workoutLogCache.slice(-8).reverse().map((e) =>
+    `<div class="list-item"><span>${e.exercise}</span><span>${e.sets}×${e.reps} — ${e.weight || 0} kg</span></div>`
+  ).join('');
+}
+
+document.getElementById('addProgressBtn').addEventListener('click', async () => {
+  const weight = document.getElementById('progWeight').value;
+  const waist = document.getElementById('progWaist').value;
+  if (!weight && !waist) return;
+  const entry = { type: 'measurement', weight: weight || null, waist: waist || null, date: new Date().toISOString().slice(0, 10) };
+  await Store.addProgress(entry);
+  document.getElementById('progWeight').value = '';
+  document.getElementById('progWaist').value = '';
+  loadProgress();
+});
+
+async function loadProgress() {
+  const list = (await Store.getProgress()) || [];
+  const el = document.getElementById('progressList');
+  if (!list.length) { el.innerHTML = '<div class="empty">Hali ma\'lumot yo\'q</div>'; return; }
+  el.innerHTML = list.slice(-15).reverse().map((e) =>
+    `<div class="list-item"><span>${e.date || ''}</span><span>${e.weight ? e.weight + ' kg' : ''} ${e.waist ? '· ' + e.waist + ' sm bel' : ''}</span></div>`
+  ).join('');
+}
+
+document.getElementById('healthFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  document.getElementById('healthStatus').textContent = file
+    ? `"${file.name}" qabul qilindi (demo). Tez orada AI tahlil funksiyasi qo'shiladi.`
+    : '';
+});
+
+document.getElementById('macroCalcBtn').addEventListener('click', async () => {
+  const kcal = Number(document.getElementById('macroKcal').value);
+  const proteinPerKg = Number(document.getElementById('macroProteinPerKg').value) || 1.8;
+  const profile = await Store.getProfile();
+  const weight = (profile && profile.weight) || 70;
+  if (!kcal) { document.getElementById('macroResult').textContent = 'Kaloriya kiriting.'; return; }
+  const proteinG = Math.round(weight * proteinPerKg);
+  const proteinKcal = proteinG * 4;
+  const fatKcal = Math.round(kcal * 0.25);
+  const fatG = Math.round(fatKcal / 9);
+  const carbKcal = Math.max(kcal - proteinKcal - fatKcal, 0);
+  const carbG = Math.round(carbKcal / 4);
+  document.getElementById('macroResult').innerHTML =
+    `<b>${kcal} kcal</b> uchun taxminiy taqsimot:<br/>` +
+    `Protein: ${proteinG} g (${proteinKcal} kcal)<br/>` +
+    `Yog': ${fatG} g (${fatKcal} kcal)<br/>` +
+    `Uglevod: ${carbG} g (${carbKcal} kcal)`;
+});
+
+async function init() {
+  const profile = await Store.getProfile();
+  if (!profile) {
+    document.getElementById('onboardingOverlay').classList.remove('hidden');
+  } else {
+    fillProfileForm(profile);
+  }
+
+  const plan = await Store.getTodayPlan();
+  if (plan && plan.text) {
+    document.getElementById('planText').textContent = plan.text;
+    document.getElementById('planCard').style.display = 'block';
+    document.getElementById('briefCard').style.display = 'none';
+  }
+
+  workoutLogCache = (await Store.getWorkoutLog()) || [];
+  renderLogList();
+
+  renderChat(Store.getChat());
+  loadProgress();
+}
+
+init();
+</script>
+</body>
+</html>
